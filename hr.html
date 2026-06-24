@@ -1,1 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>IX HR Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
+<style>
+body{
+  font-family:Arial;
+  background:#f2f2f2;
+  text-align:center;
+  margin:0;
+  padding:20px;
+}
+
+.card{
+  background:white;
+  max-width:900px;
+  margin:auto;
+  padding:20px;
+  border-radius:10px;
+  box-shadow:0 0 15px #ccc;
+}
+
+.logo{
+  width:140px;
+  margin-bottom:10px;
+}
+
+h2{
+  color:#000;
+}
+
+input{
+  padding:10px;
+  width:250px;
+  border-radius:5px;
+  border:1px solid #ccc;
+}
+
+button{
+  padding:8px 15px;
+  margin:3px;
+  border:none;
+  border-radius:5px;
+  cursor:pointer;
+  color:white;
+}
+
+.loginBtn{
+  background:#00AEEF;
+}
+
+.approve{
+  background:#28a745;
+}
+
+.reject{
+  background:#dc3545;
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:20px;
+}
+
+th,td{
+  border:1px solid #ddd;
+  padding:8px;
+}
+
+th{
+  background:#1f4e78;
+  color:white;
+}
+
+.footer{
+  margin-top:20px;
+  font-size:12px;
+  color:#777;
+}
+</style>
+</head>
+
+<body>
+
+<div class="card">
+
+<img src="logo.png" class="logo">
+
+<h2>لوحة تحكم الموارد البشرية</h2>
+
+<div id="loginDiv">
+  <input type="password" id="password" placeholder="أدخل كلمة المرور">
+  <br><br>
+  <button class="loginBtn" onclick="login()">دخول</button>
+  <p id="loginMsg"></p>
+</div>
+
+<div id="dashboard" style="display:none;">
+
+<h3>الطلبات المعلقة</h3>
+
+<table id="reqTable">
+<tr>
+<th>الرقم</th>
+<th>الاسم</th>
+<th>النوع</th>
+<th>التاريخ</th>
+<th>إجراء</th>
+</tr>
+</table>
+
+</div>
+
+<div class="footer">
+تم التصميم من خلال IX © 2026
+</div>
+
+</div>
+
+<script>
+
+const SCRIPT_URL="https://script.google.com/macros/s/AKfycbwyCbtZ-VmkFHPjUJ66c_M-Iz2G1TLPbkGk169izG7zWVUxqqV3niVtb70EoXAmTcL1NA/exec";
+
+let HR_PASSWORD="1122123120";
+
+function login(){
+  const pass=document.getElementById("password").value;
+  if(pass===HR_PASSWORD){
+    document.getElementById("loginDiv").style.display="none";
+    document.getElementById("dashboard").style.display="block";
+    loadRequests();
+  }else{
+    document.getElementById("loginMsg").innerText="كلمة المرور غير صحيحة";
+  }
+}
+
+function loadRequests(){
+
+  fetch(SCRIPT_URL,{
+    method:"POST",
+    body:JSON.stringify({
+      action:"getMyRequests",
+      phone:"ALL"
+    })
+  })
+  .then(res=>res.json())
+  .then(data=>{
+    const table=document.getElementById("reqTable");
+
+    data.forEach(r=>{
+      if(r.status==="Pending"){
+        let row=table.insertRow();
+        row.insertCell(0).innerText=r.id;
+        row.insertCell(1).innerText=r.name;
+        row.insertCell(2).innerText=r.type;
+        row.insertCell(3).innerText=r.date;
+
+        let actionCell=row.insertCell(4);
+        actionCell.innerHTML=
+        `<button class="approve" onclick="update('${r.id}','Approved')">موافقة</button>
+         <button class="reject" onclick="update('${r.id}','Rejected')">رفض</button>`;
+      }
+    });
+  });
+}
+
+function update(id,status){
+
+  fetch(SCRIPT_URL,{
+    method:"POST",
+    body:JSON.stringify({
+      action:"hrAction",
+      id:id,
+      status:status,
+      password:HR_PASSWORD
+    })
+  })
+  .then(res=>res.text())
+  .then(data=>{
+    alert(data);
+    location.reload();
+  });
+}
+
+</script>
+
+</body>
+</html>
