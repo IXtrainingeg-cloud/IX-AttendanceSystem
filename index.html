@@ -2,57 +2,113 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>نظام الحضور والانصراف</title>
+<title>Attendance System</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body{font-family:Arial;text-align:center;background:#f2f2f2;padding:20px}
+.card{background:white;padding:20px;border-radius:10px;box-shadow:0 0 10px #ccc}
+button{padding:10px 15px;margin:5px;border:none;border-radius:5px;background:#2e86de;color:white}
+select,input{padding:8px;margin:5px;width:80%}
+</style>
 </head>
+<body>
 
-<body style="text-align:center;font-family:Arial;background:#f2f2f2;padding:20px;">
-
+<div class="card">
 <h2>نظام الحضور والانصراف</h2>
 
-<input type="text" id="name" placeholder="اكتب اسمك" style="padding:10px;width:80%;"><br><br>
+<script>
+const urlParams = new URLSearchParams(window.location.search);
+const phone = urlParams.get("id");
+if(!phone){
+  document.write("رابط غير صالح");
+}
+</script>
 
-<select id="type" style="padding:10px;width:85%;">
-<option>حضور</option>
-<option>انصراف</option>
-<option>دوام من المنزل</option>
-<option>إذن</option>
-<option>إجازة مرضي</option>
-<option>إجازة عارضة</option>
-<option>انصراف مبكر</option>
-</select><br><br>
+<button onclick="checkIn()">تسجيل حضور</button>
+<button onclick="checkOut()">تسجيل انصراف</button>
 
-<button onclick="send()" style="padding:10px 20px;background:green;color:white;border:none;">
-إرسال
-</button>
+<hr>
+
+<h3>طلب جديد</h3>
+
+<select id="requestType">
+<option value="casual">إجازة عارضة</option>
+<option value="sick">إجازة مرضي</option>
+<option value="permission">إذن</option>
+<option value="early">انصراف مبكر</option>
+<option value="wfh">عمل من المنزل</option>
+</select>
+
+<br>
+<input type="date" id="reqDate">
+
+<br>
+<button onclick="sendRequest()">إرسال الطلب</button>
+
+<hr>
+
+<button onclick="viewRequests()">عرض طلباتي</button>
 
 <p id="msg"></p>
 
+</div>
+
 <script>
-function send() {
-  const name = document.getElementById("name").value;
-  const type = document.getElementById("type").value;
+const SCRIPT_URL="https://script.google.com/macros/s/AKfycbwyCbtZ-VmkFHPjUJ66c_M-Iz2G1TLPbkGk169izG7zWVUxqqV3niVtb70EoXAmTcL1NA/exec";
 
-  if(!name){
-    alert("من فضلك اكتب اسمك");
-    return;
-  }
+function checkIn(){
+navigator.geolocation.getCurrentPosition(pos=>{
+fetch(SCRIPT_URL,{
+method:"POST",
+body:JSON.stringify({
+action:"attendance",
+type:"checkin",
+phone:phone,
+lat:pos.coords.latitude,
+lng:pos.coords.longitude
+})
+})
+.then(res=>res.text())
+.then(data=>document.getElementById("msg").innerText=data);
+});
+}
 
-  navigator.geolocation.getCurrentPosition(function(position) {
-    fetch("https://script.google.com/macros/s/AKfycbwyCbtZ-VmkFHPjUJ66c_M-Iz2G1TLPbkGk169izG7zWVUxqqV3niVtb70EoXAmTcL1NA/exec", {
-      method: "POST",
-      body: JSON.stringify({
-        name: name,
-        type: type,
-        lat: position.coords.latitude,
-        lng: position.coords.longitude
-      })
-    })
-    .then(res => res.text())
-    .then(data => {
-      document.getElementById("msg").innerText = data;
-    });
-  });
+function checkOut(){
+navigator.geolocation.getCurrentPosition(pos=>{
+fetch(SCRIPT_URL,{
+method:"POST",
+body:JSON.stringify({
+action:"attendance",
+type:"checkout",
+phone:phone,
+lat:pos.coords.latitude,
+lng:pos.coords.longitude
+})
+})
+.then(res=>res.text())
+.then(data=>document.getElementById("msg").innerText=data);
+});
+}
+
+function sendRequest(){
+const type=document.getElementById("requestType").value;
+const date=document.getElementById("reqDate").value;
+
+fetch(SCRIPT_URL,{
+method:"POST",
+body:JSON.stringify({
+action:"request",
+type:type,
+phone:phone,
+date:date
+})
+})
+.then(res=>res.text())
+.then(data=>document.getElementById("msg").innerText=data);
+}
+
+function viewRequests(){
+window.location.href="myrequests.html?id="+phone;
 }
 </script>
 
