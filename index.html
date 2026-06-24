@@ -1,121 +1,151 @@
 <!DOCTYPE html>
-<html>
+<html dir="rtl">
 <head>
 <meta charset="UTF-8">
 <title>IX Attendance System</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
-body{
-  font-family:Arial;
-  text-align:center;
-  background:#f2f2f2;
-  padding:20px;
-  margin:0;
-}
-.card{
-  background:white;
-  padding:25px;
-  border-radius:10px;
-  box-shadow:0 0 15px #ccc;
-  max-width:400px;
-  margin:auto;
-}
-.logo{
-  width:150px;
-  margin-bottom:15px;
-}
-h2{
-  color:#000;
-  margin:10px 0;
-}
-button{
-  padding:12px 20px;
-  margin:5px;
-  border:none;
-  border-radius:5px;
-  background:#00AEEF;
-  color:white;
-  cursor:pointer;
-  font-size:14px;
-}
-button:hover{
-  background:#008CCF;
-}
-select,input{
-  padding:10px;
-  margin:5px;
-  width:85%;
-  border:1px solid #ddd;
-  border-radius:5px;
-}
-.footer{
-  margin-top:20px;
-  padding-top:15px;
-  border-top:1px solid #ddd;
-  color:#666;
-  font-size:12px;
-}
-#msg{
-  margin-top:15px;
-  font-weight:bold;
-}
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    text-align: center;
+    background: #f4f6f9;
+    margin: 0;
+    padding: 20px;
+    color: #333;
+  }
+
+  .card {
+    background: white;
+    max-width: 400px;
+    margin: 0 auto;
+    padding: 30px 20px;
+    border-radius: 15px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    border-top: 5px solid #00a8e8; /* لون اللوجو الأزرق */
+  }
+
+  .logo-container {
+    margin-bottom: 20px;
+  }
+
+  h2 {
+    color: #222;
+    margin-bottom: 25px;
+    font-size: 22px;
+    font-weight: bold;
+  }
+
+  button {
+    padding: 12px 20px;
+    margin: 8px 0;
+    border: none;
+    border-radius: 8px;
+    background: #00a8e8; /* لون اللوجو الأزرق */
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+    width: 100%;
+    transition: background 0.3s;
+    font-weight: bold;
+  }
+
+  button:hover {
+    background: #0086b9; /* درجة أغمق قليلاً عند التمرير */
+  }
+
+  button.secondary {
+    background: #fff;
+    color: #333;
+    border: 1px solid #ddd;
+  }
+  
+  button.secondary:hover {
+    background: #f9f9f9;
+  }
+
+  select, input {
+    padding: 12px;
+    margin: 10px 0;
+    width: 90%;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 16px;
+    text-align: right;
+  }
+
+  hr {
+    border: 0;
+    height: 1px;
+    background: #eee;
+    margin: 25px 0;
+  }
+
+  #msg {
+    margin-top: 15px;
+    font-weight: bold;
+    min-height: 24px;
+  }
+
+  .footer {
+    margin-top: 30px;
+    font-size: 12px;
+    color: #888;
+  }
 </style>
 </head>
 <body>
 
 <div class="card">
+  
+  <!-- مكان اللوجو -->
+  <div class="logo-container">
+    <img src="logo.png" alt="IX Holding Logo" style="max-width: 150px; height: auto;">
+  </div>
 
-<!-- ✅ اللوجو -->
-<img src="logo.png" class="logo" alt="IX Holding" id="companyLogo">
+  <h2>نظام الحضور والانصراف</h2>
 
-<h2>نظام الحضور والانصراف</h2>
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const phone = urlParams.get("id");
+    if(!phone){
+      document.body.innerHTML = "<h3 style='color:red'>رابط غير صالح</h3>";
+    }
+  </script>
 
-<script>
-const urlParams = new URLSearchParams(window.location.search);
-const phone = urlParams.get("id");
-if(!phone){
-  document.write("رابط غير صالح");
-}
-</script>
+  <button onclick="checkIn()">تسجيل حضور</button>
+  <button onclick="checkOut()" class="secondary">تسجيل انصراف</button>
 
-<button onclick="checkIn()">تسجيل حضور</button>
-<button onclick="checkOut()">تسجيل انصراف</button>
+  <hr>
 
-<hr>
+  <h3 style="font-size: 18px; margin-bottom: 15px;">طلب جديد</h3>
 
-<h3>طلب جديد</h3>
+  <select id="requestType">
+    <option value="" disabled selected>اختر نوع الطلب...</option>
+    <option value="casual">إجازة عارضة</option>
+    <option value="sick">إجازة مرضي</option>
+    <option value="permission">إذن</option>
+    <option value="early">انصراف مبكر</option>
+    <option value="wfh">عمل من المنزل</option>
+  </select>
 
-<select id="requestType">
-<option value="casual">إجازة عارضة</option>
-<option value="sick">إجازة مرضي</option>
-<option value="permission">إذن</option>
-<option value="early">انصراف مبكر</option>
-<option value="wfh">عمل من المنزل</option>
-</select>
+  <input type="date" id="reqDate">
 
-<br>
-<input type="date" id="reqDate">
+  <button onclick="sendRequest()">إرسال الطلب</button>
 
-<br>
-<button onclick="sendRequest()">إرسال الطلب</button>
+  <hr>
 
-<hr>
+  <button onclick="viewRequests()" class="secondary">عرض طلباتي وسجلي</button>
 
-<button onclick="viewRequests()">عرض طلباتي</button>
+  <p id="msg"></p>
 
-<p id="msg"></p>
-
-<div class="footer">
-تم التصميم من خلال IX © 2026
-</div>
+  <div class="footer">
+    تم التصميم من خلال IX © 2026
+  </div>
 
 </div>
 
 <script>
 const SCRIPT_URL="https://script.google.com/macros/s/AKfycbwyCbtZ-VmkFHPjUJ66c_M-Iz2G1TLPbkGk169izG7zWVUxqqV3niVtb70EoXAmTcL1NA/exec";
-
-// ✅ إضافة cache-busting للوجو
-document.getElementById("companyLogo").src = "logo.png?v=" + new Date().getTime();
 
 function checkIn(){
   navigator.geolocation.getCurrentPosition(pos=>{
@@ -131,6 +161,8 @@ function checkIn(){
     })
     .then(res=>res.text())
     .then(data=>document.getElementById("msg").innerText=data);
+  }, (err) => {
+    alert("يجب تفعيل الموقع الجغرافي لتسجيل الحضور");
   });
 }
 
@@ -148,12 +180,19 @@ function checkOut(){
     })
     .then(res=>res.text())
     .then(data=>document.getElementById("msg").innerText=data);
+  }, (err) => {
+    alert("يجب تفعيل الموقع الجغرافي لتسجيل الانصراف");
   });
 }
 
 function sendRequest(){
   const type=document.getElementById("requestType").value;
   const date=document.getElementById("reqDate").value;
+
+  if(!type || !date) {
+    alert("من فضلك اختر نوع الطلب وحدد التاريخ");
+    return;
+  }
 
   fetch(SCRIPT_URL,{
     method:"POST",
