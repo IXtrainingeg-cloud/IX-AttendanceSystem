@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>نظام الحضور والانصراف</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+
+<body style="text-align:center;font-family:Arial;background:#f2f2f2;padding:20px;">
+
+<h2>نظام الحضور والانصراف</h2>
+
+<input type="text" id="name" placeholder="اكتب اسمك" style="padding:10px;width:80%;"><br><br>
+
+<select id="type" style="padding:10px;width:85%;">
+<option>حضور</option>
+<option>انصراف</option>
+<option>دوام من المنزل</option>
+<option>إذن</option>
+<option>إجازة مرضي</option>
+<option>إجازة عارضة</option>
+<option>انصراف مبكر</option>
+</select><br><br>
+
+<button onclick="send()" style="padding:10px 20px;background:green;color:white;border:none;">
+إرسال
+</button>
+
+<p id="msg"></p>
+
+<script>
+function send() {
+  const name = document.getElementById("name").value;
+  const type = document.getElementById("type").value;
+
+  if(!name){
+    alert("من فضلك اكتب اسمك");
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(function(position) {
+    fetch("https://script.google.com/macros/s/AKfycbwyCbtZ-VmkFHPjUJ66c_M-Iz2G1TLPbkGk169izG7zWVUxqqV3niVtb70EoXAmTcL1NA/exec", {
+      method: "POST",
+      body: JSON.stringify({
+        name: name,
+        type: type,
+        lat: position.coords.latitude,
+        lng: position.coords.longitude
+      })
+    })
+    .then(res => res.text())
+    .then(data => {
+      document.getElementById("msg").innerText = data;
+    });
+  });
+}
+</script>
+
+</body>
+</html>
