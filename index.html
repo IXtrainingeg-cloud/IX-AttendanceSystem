@@ -2,18 +2,72 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Attendance System</title>
+<title>IX Attendance System</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
-body{font-family:Arial;text-align:center;background:#f2f2f2;padding:20px}
-.card{background:white;padding:20px;border-radius:10px;box-shadow:0 0 10px #ccc}
-button{padding:10px 15px;margin:5px;border:none;border-radius:5px;background:#2e86de;color:white}
-select,input{padding:8px;margin:5px;width:80%}
+body{
+  font-family:Arial;
+  text-align:center;
+  background:#f2f2f2;
+  padding:20px;
+  margin:0;
+}
+.card{
+  background:white;
+  padding:25px;
+  border-radius:10px;
+  box-shadow:0 0 15px #ccc;
+  max-width:400px;
+  margin:auto;
+}
+.logo{
+  width:150px;
+  margin-bottom:15px;
+}
+h2{
+  color:#000;
+  margin:10px 0;
+}
+button{
+  padding:12px 20px;
+  margin:5px;
+  border:none;
+  border-radius:5px;
+  background:#00AEEF;
+  color:white;
+  cursor:pointer;
+  font-size:14px;
+}
+button:hover{
+  background:#008CCF;
+}
+select,input{
+  padding:10px;
+  margin:5px;
+  width:85%;
+  border:1px solid #ddd;
+  border-radius:5px;
+}
+.footer{
+  margin-top:20px;
+  padding-top:15px;
+  border-top:1px solid #ddd;
+  color:#666;
+  font-size:12px;
+}
+#msg{
+  margin-top:15px;
+  font-weight:bold;
+}
 </style>
 </head>
 <body>
 
-<img src="logo.png" width="120"><br><br>
+<div class="card">
+
+<!-- ✅ اللوجو -->
+<img src="logo.png" class="logo" alt="IX Holding" id="companyLogo">
+
 <h2>نظام الحضور والانصراف</h2>
 
 <script>
@@ -51,69 +105,73 @@ if(!phone){
 
 <p id="msg"></p>
 
+<div class="footer">
+تم التصميم من خلال IX © 2026
+</div>
+
 </div>
 
 <script>
 const SCRIPT_URL="https://script.google.com/macros/s/AKfycbwyCbtZ-VmkFHPjUJ66c_M-Iz2G1TLPbkGk169izG7zWVUxqqV3niVtb70EoXAmTcL1NA/exec";
 
+// ✅ إضافة cache-busting للوجو
+document.getElementById("companyLogo").src = "logo.png?v=" + new Date().getTime();
+
 function checkIn(){
-navigator.geolocation.getCurrentPosition(pos=>{
-fetch(SCRIPT_URL,{
-method:"POST",
-body:JSON.stringify({
-action:"attendance",
-type:"checkin",
-phone:phone,
-lat:pos.coords.latitude,
-lng:pos.coords.longitude
-})
-})
-.then(res=>res.text())
-.then(data=>document.getElementById("msg").innerText=data);
-});
+  navigator.geolocation.getCurrentPosition(pos=>{
+    fetch(SCRIPT_URL,{
+      method:"POST",
+      body:JSON.stringify({
+        action:"attendance",
+        type:"checkin",
+        phone:phone,
+        lat:pos.coords.latitude,
+        lng:pos.coords.longitude
+      })
+    })
+    .then(res=>res.text())
+    .then(data=>document.getElementById("msg").innerText=data);
+  });
 }
 
 function checkOut(){
-navigator.geolocation.getCurrentPosition(pos=>{
-fetch(SCRIPT_URL,{
-method:"POST",
-body:JSON.stringify({
-action:"attendance",
-type:"checkout",
-phone:phone,
-lat:pos.coords.latitude,
-lng:pos.coords.longitude
-})
-})
-.then(res=>res.text())
-.then(data=>document.getElementById("msg").innerText=data);
-});
+  navigator.geolocation.getCurrentPosition(pos=>{
+    fetch(SCRIPT_URL,{
+      method:"POST",
+      body:JSON.stringify({
+        action:"attendance",
+        type:"checkout",
+        phone:phone,
+        lat:pos.coords.latitude,
+        lng:pos.coords.longitude
+      })
+    })
+    .then(res=>res.text())
+    .then(data=>document.getElementById("msg").innerText=data);
+  });
 }
 
 function sendRequest(){
-const type=document.getElementById("requestType").value;
-const date=document.getElementById("reqDate").value;
+  const type=document.getElementById("requestType").value;
+  const date=document.getElementById("reqDate").value;
 
-fetch(SCRIPT_URL,{
-method:"POST",
-body:JSON.stringify({
-action:"request",
-type:type,
-phone:phone,
-date:date
-})
-})
-.then(res=>res.text())
-.then(data=>document.getElementById("msg").innerText=data);
+  fetch(SCRIPT_URL,{
+    method:"POST",
+    body:JSON.stringify({
+      action:"request",
+      type:type,
+      phone:phone,
+      date:date
+    })
+  })
+  .then(res=>res.text())
+  .then(data=>document.getElementById("msg").innerText=data);
 }
 
 function viewRequests(){
-window.location.href="myrequests.html?id="+phone;
+  window.location.href="myrequests.html?id="+phone;
 }
 </script>
-<hr>
-<p style="color:gray;font-size:12px;">
-تم التصميم من خلال IX © 2026
-</p>
+
 </body>
 </html>
