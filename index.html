@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <title>IX Attendance System</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+
 <style>
   body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -21,7 +22,7 @@
     padding: 30px 20px;
     border-radius: 15px;
     box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-    border-top: 5px solid #00a8e8; /* لون اللوجو الأزرق */
+    border-top: 5px solid #00a8e8;
   }
 
   .logo-container {
@@ -35,22 +36,32 @@
     font-weight: bold;
   }
 
+  h3 {
+    font-size: 18px;
+    margin-bottom: 15px;
+  }
+
   button {
     padding: 12px 20px;
     margin: 8px 0;
     border: none;
     border-radius: 8px;
-    background: #00a8e8; /* لون اللوجو الأزرق */
+    background: #00a8e8;
     color: white;
     font-size: 16px;
     cursor: pointer;
     width: 100%;
-    transition: background 0.3s;
+    transition: background 0.3s, opacity 0.3s;
     font-weight: bold;
   }
 
   button:hover {
-    background: #0086b9; /* درجة أغمق قليلاً عند التمرير */
+    background: #0086b9;
+  }
+
+  button:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
   }
 
   button.secondary {
@@ -71,6 +82,7 @@
     border-radius: 8px;
     font-size: 16px;
     text-align: right;
+    background: white;
   }
 
   hr {
@@ -81,9 +93,7 @@
   }
 
   #msg {
-    margin-top: 15px;
-    font-weight: bold;
-    min-height: 24px;
+    display: none;
   }
 
   .footer {
@@ -91,33 +101,91 @@
     font-size: 12px;
     color: #888;
   }
+
+  /* ================= TOAST BAR ================= */
+
+  .toast {
+    visibility: hidden;
+    min-width: 280px;
+    max-width: 90%;
+    background: #1f4e78;
+    color: #fff;
+    text-align: center;
+    border-radius: 10px;
+    padding: 15px 18px;
+    position: fixed;
+    z-index: 9999;
+    left: 50%;
+    bottom: 30px;
+    transform: translateX(-50%);
+    font-size: 15px;
+    font-weight: bold;
+    line-height: 1.6;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+  }
+
+  .toast.show {
+    visibility: visible;
+    animation: fadein 0.35s, fadeout 0.35s 4.2s;
+  }
+
+  .toast.success {
+    background: #28a745;
+  }
+
+  .toast.warning {
+    background: #ffc107;
+    color: #111;
+  }
+
+  .toast.error {
+    background: #dc3545;
+  }
+
+  .toast.info {
+    background: #1f4e78;
+  }
+
+  @keyframes fadein {
+    from {
+      bottom: 0;
+      opacity: 0;
+    }
+    to {
+      bottom: 30px;
+      opacity: 1;
+    }
+  }
+
+  @keyframes fadeout {
+    from {
+      bottom: 30px;
+      opacity: 1;
+    }
+    to {
+      bottom: 0;
+      opacity: 0;
+    }
+  }
 </style>
 </head>
+
 <body>
 
-<div class="card">
+<div class="card" id="mainCard">
   
-  <!-- مكان اللوجو -->
   <div class="logo-container">
     <img src="logo.png" alt="IX Holding Logo" style="max-width: 150px; height: auto;">
   </div>
 
   <h2>نظام الحضور والانصراف</h2>
 
-  <script>
-    const urlParams = new URLSearchParams(window.location.search);
-    const phone = urlParams.get("id");
-    if(!phone){
-      document.body.innerHTML = "<h3 style='color:red'>رابط غير صالح</h3>";
-    }
-  </script>
-
-  <button onclick="checkIn()">تسجيل حضور</button>
-  <button onclick="checkOut()" class="secondary">تسجيل انصراف</button>
+  <button onclick="checkIn(this)">تسجيل حضور</button>
+  <button onclick="checkOut(this)" class="secondary">تسجيل انصراف</button>
 
   <hr>
 
-  <h3 style="font-size: 18px; margin-bottom: 15px;">طلب جديد</h3>
+  <h3>طلب جديد</h3>
 
   <select id="requestType">
     <option value="" disabled selected>اختر نوع الطلب...</option>
@@ -130,7 +198,7 @@
 
   <input type="date" id="reqDate">
 
-  <button onclick="sendRequest()">إرسال الطلب</button>
+  <button onclick="sendRequest(this)">إرسال الطلب</button>
 
   <hr>
 
@@ -144,71 +212,236 @@
 
 </div>
 
+<!-- Toast Message -->
+<div id="toast" class="toast"></div>
+
 <script>
-const SCRIPT_URL="https://script.google.com/macros/s/AKfycbwyCbtZ-VmkFHPjUJ66c_M-Iz2G1TLPbkGk169izG7zWVUxqqV3niVtb70EoXAmTcL1NA/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwyCbtZ-VmkFHPjUJ66c_M-Iz2G1TLPbkGk169izG7zWVUxqqV3niVtb70EoXAmTcL1NA/exec";
 
-function checkIn(){
-  navigator.geolocation.getCurrentPosition(pos=>{
-    fetch(SCRIPT_URL,{
-      method:"POST",
-      body:JSON.stringify({
-        action:"attendance",
-        type:"checkin",
-        phone:phone,
-        lat:pos.coords.latitude,
-        lng:pos.coords.longitude
-      })
-    })
-    .then(res=>res.text())
-    .then(data=>document.getElementById("msg").innerText=data);
-  }, (err) => {
-    alert("يجب تفعيل الموقع الجغرافي لتسجيل الحضور");
-  });
+const urlParams = new URLSearchParams(window.location.search);
+const phone = urlParams.get("id");
+
+let toastTimer = null;
+
+if (!phone) {
+  document.getElementById("mainCard").innerHTML = `
+    <div class="logo-container">
+      <img src="logo.png" alt="IX Holding Logo" style="max-width: 150px; height: auto;">
+    </div>
+    <h2 style="color:#dc3545;">رابط غير صالح</h2>
+    <p>يرجى استخدام الرابط المخصص لك من الإدارة.</p>
+    <div class="footer">تم التصميم من خلال IX © 2026</div>
+  `;
 }
 
-function checkOut(){
-  navigator.geolocation.getCurrentPosition(pos=>{
-    fetch(SCRIPT_URL,{
-      method:"POST",
-      body:JSON.stringify({
-        action:"attendance",
-        type:"checkout",
-        phone:phone,
-        lat:pos.coords.latitude,
-        lng:pos.coords.longitude
-      })
-    })
-    .then(res=>res.text())
-    .then(data=>document.getElementById("msg").innerText=data);
-  }, (err) => {
-    alert("يجب تفعيل الموقع الجغرافي لتسجيل الانصراف");
-  });
+/* ================= TOAST FUNCTION ================= */
+
+function showToast(message, type) {
+  const toast = document.getElementById("toast");
+
+  if (!type) {
+    type = detectToastType(message);
+  }
+
+  toast.innerText = message;
+  toast.className = "toast show " + type;
+
+  if (toastTimer) {
+    clearTimeout(toastTimer);
+  }
+
+  toastTimer = setTimeout(function() {
+    toast.className = "toast";
+  }, 4500);
 }
 
-function sendRequest(){
-  const type=document.getElementById("requestType").value;
-  const date=document.getElementById("reqDate").value;
+function detectToastType(message) {
+  if (!message) return "info";
 
-  if(!type || !date) {
-    alert("من فضلك اختر نوع الطلب وحدد التاريخ");
+  const msg = String(message);
+
+  if (
+    msg.includes("Error") ||
+    msg.includes("Server") ||
+    msg.includes("خطأ")
+  ) {
+    return "error";
+  }
+
+  if (
+    msg.includes("انتظار") ||
+    msg.includes("خارج") ||
+    msg.includes("غير") ||
+    msg.includes("لم") ||
+    msg.includes("مسبق") ||
+    msg.includes("تجاوز") ||
+    msg.includes("يجب") ||
+    msg.includes("لا يمكن") ||
+    msg.includes("مرفوض")
+  ) {
+    return "warning";
+  }
+
+  if (
+    msg.includes("تم") ||
+    msg.includes("✅")
+  ) {
+    return "success";
+  }
+
+  return "info";
+}
+
+/* ================= BUTTON LOADING ================= */
+
+function setButtonLoading(button, isLoading, loadingText) {
+  if (!button) return;
+
+  if (isLoading) {
+    button.dataset.originalText = button.innerText;
+    button.innerText = loadingText || "جارٍ التنفيذ...";
+    button.disabled = true;
+  } else {
+    button.innerText = button.dataset.originalText || button.innerText;
+    button.disabled = false;
+  }
+}
+
+/* ================= API HELPER ================= */
+
+function postToServer(payload) {
+  return fetch(SCRIPT_URL, {
+    method: "POST",
+    body: JSON.stringify(payload)
+  }).then(res => res.text());
+}
+
+/* ================= ATTENDANCE ================= */
+
+function checkIn(button) {
+  if (!phone) {
+    showToast("رابط غير صالح", "error");
     return;
   }
 
-  fetch(SCRIPT_URL,{
-    method:"POST",
-    body:JSON.stringify({
-      action:"request",
-      type:type,
-      phone:phone,
-      date:date
+  if (!navigator.geolocation) {
+    showToast("المتصفح لا يدعم تحديد الموقع", "error");
+    return;
+  }
+
+  setButtonLoading(button, true, "جارٍ تسجيل الحضور...");
+
+  navigator.geolocation.getCurrentPosition(pos => {
+    postToServer({
+      action: "attendance",
+      type: "checkin",
+      phone: phone,
+      lat: pos.coords.latitude,
+      lng: pos.coords.longitude
     })
-  })
-  .then(res=>res.text())
-  .then(data=>document.getElementById("msg").innerText=data);
+    .then(data => {
+      showToast(data);
+    })
+    .catch(err => {
+      showToast("حدث خطأ أثناء الاتصال بالخادم", "error");
+    })
+    .finally(() => {
+      setButtonLoading(button, false);
+    });
+
+  }, err => {
+    setButtonLoading(button, false);
+    showToast("يجب تفعيل الموقع الجغرافي لتسجيل الحضور", "warning");
+  }, {
+    enableHighAccuracy: true,
+    timeout: 15000,
+    maximumAge: 0
+  });
 }
 
-function viewRequests(){
-  window.location.href="myrequests.html?id="+phone;
+function checkOut(button) {
+  if (!phone) {
+    showToast("رابط غير صالح", "error");
+    return;
+  }
+
+  if (!navigator.geolocation) {
+    showToast("المتصفح لا يدعم تحديد الموقع", "error");
+    return;
+  }
+
+  setButtonLoading(button, true, "جارٍ تسجيل الانصراف...");
+
+  navigator.geolocation.getCurrentPosition(pos => {
+    postToServer({
+      action: "attendance",
+      type: "checkout",
+      phone: phone,
+      lat: pos.coords.latitude,
+      lng: pos.coords.longitude
+    })
+    .then(data => {
+      showToast(data);
+    })
+    .catch(err => {
+      showToast("حدث خطأ أثناء الاتصال بالخادم", "error");
+    })
+    .finally(() => {
+      setButtonLoading(button, false);
+    });
+
+  }, err => {
+    setButtonLoading(button, false);
+    showToast("يجب تفعيل الموقع الجغرافي لتسجيل الانصراف", "warning");
+  }, {
+    enableHighAccuracy: true,
+    timeout: 15000,
+    maximumAge: 0
+  });
+}
+
+/* ================= REQUESTS ================= */
+
+function sendRequest(button) {
+  if (!phone) {
+    showToast("رابط غير صالح", "error");
+    return;
+  }
+
+  const type = document.getElementById("requestType").value;
+  const date = document.getElementById("reqDate").value;
+
+  if (!type || !date) {
+    showToast("من فضلك اختر نوع الطلب وحدد التاريخ", "warning");
+    return;
+  }
+
+  setButtonLoading(button, true, "جارٍ إرسال الطلب...");
+
+  postToServer({
+    action: "request",
+    type: type,
+    phone: phone,
+    date: date
+  })
+  .then(data => {
+    showToast(data);
+  })
+  .catch(err => {
+    showToast("حدث خطأ أثناء إرسال الطلب", "error");
+  })
+  .finally(() => {
+    setButtonLoading(button, false);
+  });
+}
+
+function viewRequests() {
+  if (!phone) {
+    showToast("رابط غير صالح", "error");
+    return;
+  }
+
+  window.location.href = "myrequests.html?id=" + phone;
 }
 </script>
 
